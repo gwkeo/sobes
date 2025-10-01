@@ -1,0 +1,12 @@
+.git
+.gitignore
+bin/
+.env
+*.out
+*.test
+.DS_Store
+.gocache/
+.gomodcache/
+.gopath/
+README.md
+docs/

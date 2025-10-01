@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis-catalog-redis
+    command:
+      - redis-server
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 1s
+      retries: 30
+
+  api:
+    build: .
+    container_name: redis-catalog-api
+    ports:
+      - "8080:8080"
+    environment:
+      HTTP_ADDR: ":8080"
+      REDIS_ADDR: "redis:6379"
+      LOG_FORMAT: "json"
+      ENABLE_DEBUG: "true"
+      STORE_LATENCY: "80ms"
+      CACHE_PRODUCT_FRESH_TTL: "20s"
+      CACHE_PRODUCT_STALE_TTL: "3m"
+      CACHE_LIST_FRESH_TTL: "15s"
+      CACHE_LIST_STALE_TTL: "2m"
+      CACHE_L1_TTL: "2s"
+      RATE_LIMIT: "120"
+      RATE_WINDOW: "1m"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+    depends_on:
+      redis:
+        condition: service_healthy
